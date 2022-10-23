@@ -1,0 +1,17 @@
+clear;
+clc;
+Lx = 1 ;
+Ly = 1 ;
+Tx0 = 1 ;
+Txf = 0 ;
+Ty0 = 1 ;
+Tyf = 0 ;
+M = 100 ;
+N = 110 ;
+k = 1 ;
+A = 1 ;
+qx0=0;
+qxf=0;
+qy0=0;
+qyf=0;
+[u,x,y]=FV_2D_Neumam(Lx,Ly,Tx0,Txf,Ty0,Tyf,M,N,k,A,qx0,qy0,qxf,qyf);
