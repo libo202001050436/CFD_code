@@ -1,0 +1,24 @@
+clear;
+clc;
+uW = @(x)(0);
+uE = @(x)(0);
+uS = @(x)(0);
+uN = @(x)(1);
+vN = @(y)(0);
+vS = @(y)(0);
+vW = @(y)(0);
+vE = @(y)(0);
+pW = @(x,y)(0);
+pE = @(x,y)(0);
+pN = @(x,y)(0);
+pS = @(x,y)(0);
+alpha_p = 0.4;
+alpha_u = 0.7;
+Lx = 1;
+Ly = 1;
+M  = 15;
+N  = 15;
+mu = 1;
+rho = 1;
+[u,x,y]=SIMPLE(uW,uE,uN,uS,vW,vE,vN,vS,...
+    rho,pW,pE,pN,pS,alpha_p,alpha_u,Lx,Ly,M,N,mu);
