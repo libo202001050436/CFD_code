@@ -1,7 +1,12 @@
-function [T,u,v] = unsteady_heat(Lx,Ly,time,dt,T0,TW,TE,TN,TS,dx,dy,rho0,...
-    alpha,V_char,L_char,T_char,mu,g,P_char,heat_cap,k,uN,uS,vW,vE)
+function [theta,u,v] = unsteady_heat(Lx,Ly,time,dt,T0,TW,TE,TN,TS,dx,dy,rho_background,...
+    alpha,V_char,L_char,T_char,mu,g,P_char,Temperature_char,heat_cap,k_inter,uN,uS,vW,vE,WP)
 
-theta = 0.5;
+%k is the coefficient of thermal conductive
+%theta is the temperature of nodes
+%alpha is the average coefficient of thermal expansion =1/V*dV/dtheta
+%T_char relys on time not temperature
+ppp = 0;
+
 M1 = Lx / dx;
 x  = dx / 2 + [0:M1-1] * dx;
 
@@ -12,336 +17,335 @@ Mt = time / dt;
 
 u = zeros(M1,M2);
 v = zeros(M1,M2);
-T = zeros(M1,M2);
-
-for j = 1:M2
-    for i = 1:M1
-        T(i,j) = T0;
+theta = zeros(M1,M2);
+k = zeros(M1,M2);
+for i = 1:M1
+    for j = 1:M2
+        theta(i,j) = T0;
     end
 end
-Sp = zeros(M1,M2);
-Su = zeros(M1,M2);
+for i = 1:M1
+    for j = 1:M2
+        %         if j == 1 || j == M2
+        %             k(i,j) = 1e-9;
+        %         elseif 1
+        k(i,j) = k_inter;
+        %         end
+    end
+end
+
+
+Pe = zeros(M1,M2);
+St = zeros(M1,M2);
 rho= zeros(M1,M2);
 Eu = zeros(M1,M2);
 Re = zeros(M1,M2);
 
+aP = zeros(M1,M2);
+aW = zeros(M1,M2);
+aE = zeros(M1,M2);
+aN = zeros(M1,M2);
+aS = zeros(M1,M2);
+Su = zeros(M1,M2);
+
+
 
 for j = 1:M2
     for i = 1:M1
-        rho(i,j) = rho0;
+        rho(i,j) = rho_background;
     end
 end
-% %%
-% rho(2*M1/5:3*M1/5,2*M2/5:3*M2/5) = 0.9;
-% %%
-%%在NS的基础上加入能量方程
+
 for t = 0:Mt
-    %计算温度场
-    if t>0
+
+    %give the initial value of v, u, T
+    if t > 0
         u = u0;
         v = v0;
     end
-    rho0 = rho;
-    ppp=0;
-    %%
-%     for i = 1:M1
-%         for j = 1:M2
-%             kapa = k / rho(i,j) / heat_cap;
-%             coef_ins = kapa * T_char * theta * dt / L_char / L_char;
-%             u_ins = u(i,j);
-%             v_ins = v(i,j);
-%             TP_ins  = T(i,j);
-%             aP0 = (dx * dy / dt - kapa * T_char / L_char / L_char...
-%                 * (1 - theta) * 2 * dy * dt / dx -...
-%                 kapa * T_char / L_char / L_char * (1 - theta) ...
-%                 * 2 * dx * dt / dy);
-%             aE0 = (-(1 - theta) * v_ins * dx * dt / 2 + kapa * T_char...
-%                 /L_char / L_char * (1-theta) * dy * dt / dy);
-%             aW0 = aE0;
-%             aN0 = (-(1 - theta) * v_ins * dx * dt / 2 + kapa * T_char...
-%                 /L_char / L_char * (1-theta) * dy * dt / dy);
-%             aS0 = aN0;
-%             if i>1 && i<M1
-%                 TN_ins = T(i+1,j);
-%                 TS_ins = T(i-1,j);
-%                 if j>1 && j<M2
-%                     TE_ins = T(i,j+1);
-%                     TW_ins = T(i,j-1);
-%                     aW(i,j) = theta * (coef_ins * dy / dx + theta * u_ins *dy*dt/2);
-%                     aE(i,j) = theta * (coef_ins * dy / dx - theta * u_ins *dy*dt/2);
-%                     aS(i,j) = theta * (coef_ins * dx / dy + theta * v_ins *dx*dt/2);
-%                     aN(i,j) = theta * (coef_ins * dx / dy + theta * v_ins *dx*dt/2);
-%                     Sp(i,j) = -(dx * dy / dt);
-%                 end
-%                 if j == 1
-%                     TW_ins = T0;
-%                     TE_ins = T(i,j+1);
-%                     aE(i,j) = theta * (coef_ins * dy / dx - theta * u_ins *dy*dt/2);
-%                     aS(i,j) = theta * (coef_ins * dx / dy + theta * v_ins *dx*dt/2);
-%                     aN(i,j) = theta * (coef_ins * dx / dy + theta * v_ins *dx*dt/2);
-%                     Sp(i,j) = -(dx * dy / dt + theta * u_ins * dy * dt ...
-%                         + 2 * kapa * T_char * theta *dy*dt / dx / L_char / L_char);
-%                 end
-%                 if j == M2
-%                     TE_ins = T0;
-%                     TW_ins = T(i,j-1);
-%                     aW(i,j) = theta * (coef_ins * dy / dx + theta * u_ins *dy*dt/2);
-%                     aS(i,j) = theta * (coef_ins * dx / dy + theta * v_ins *dx*dt/2);
-%                     aN(i,j) = theta * (coef_ins * dx / dy + theta * v_ins *dx*dt/2);
-%                     Sp(i,j) = -(dx * dy / dt - theta * u_ins * dy * dt ...
-%                         + 2 * kapa * T_char * theta *dy*dt / dx / L_char / L_char);
-%                 end
-%             end
-%             if i == 1
-%                 TN_ins = T(i+1,j);
-%                 TS_ins = TS(x(i));
-%                 if j<M2 && j>1
-%                     TE_ins = T(i,j+1);
-%                     TW_ins = T(i,j-1);
-%                     aW(i,j) = theta * (coef_ins * dy / dx + theta * u_ins *dy*dt/2);
-%                     aE(i,j) = theta * (coef_ins * dy / dx - theta * u_ins *dy*dt/2);
-%                     aN(i,j) = theta * (coef_ins * dx / dy + theta * v_ins *dx*dt/2);
-%                     Sp(i,j) = -(dx * dy / dt + theta * v_ins * dx * dt ...
-%                         + 2 * kapa * T_char * theta *dx*dt / dy / L_char / L_char);
-%                 end
-%                 if j == 1
-%                     TE_ins = T(i,j+1);
-%                     TW_ins = T0;
-%                     aE(i,j) = theta * (coef_ins * dy / dx - theta * u_ins *dy*dt/2);
-%                     aN(i,j) = theta * (coef_ins * dx / dy + theta * v_ins *dx*dt/2);
-%                     Sp(i,j) = -(dx * dy / dt + theta * v_ins * dy * dt ...
-%                         + 2 * kapa * T_char * theta *dx*dt / ...
-%                         dy / L_char / L_char + theta * u_ins * dy * dt ...
-%                         + 2 * kapa * T_char * theta *dy*dt / dx / L_char / L_char);
-%                 end
-%                 if j == M2
-%                     TE_ins = T0;
-%                     TW_ins = T(i,j-1);
-%                     aW(i,j) = theta * (coef_ins * dy / dx + theta * u_ins *dy*dt/2);
-%                     aN(i,j) = theta * (coef_ins * dx / dy + theta * v_ins *dx*dt/2);
-%                     Sp(i,j) = -(dx * dy / dt + theta * v_ins * dy * dt ...
-%                         + 2 * kapa * T_char * theta *dy*dt / ...
-%                         dx / L_char / L_char - theta * u_ins * dy * dt ...
-%                         + 2 * kapa * T_char * theta *dy*dt / dx / L_char / L_char);
-%                 end
-%             end
-%             if i == M1
-%                 TN_ins = T0;
-%                 TS_ins = T(i-1,j);
-%                 if j<M2 && j>1
-%                     TE_ins = T(i,j+1);
-%                     TW_ins = T(i,j-1);
-%                     aW(i,j) = theta * (coef_ins * dy / dx + theta * u_ins *dy*dt/2);
-%                     aE(i,j) = theta * (coef_ins * dy / dx - theta * u_ins *dy*dt/2);
-%                     aS(i,j) = theta * (coef_ins * dx / dy + theta * v_ins *dx*dt/2);
-%                     Sp(i,j) = -(dx * dy / dt - theta * v_ins * dx * dt ...
-%                         + 2 * kapa * T_char * theta *dx*dt / dy / L_char / L_char);
-%                 end
-%                 if j == 1
-%                     TE_ins = T(i,j+1);
-%                     TW_ins = T0;
-%                     aE(i,j) = theta * (coef_ins * dy / dx - theta * u_ins *dy*dt/2);
-%                     aS(i,j) = theta * (coef_ins * dx / dy + theta * v_ins *dx*dt/2);
-%                     Sp(i,j) = -(dx * dy / dt - theta * v_ins * dx * dt ...
-%                         + 2 * kapa * T_char * theta *dx*dt / dy / L_char ...
-%                         / L_char + theta * u_ins * dy * dt ...
-%                         + 2 * kapa * T_char * theta *dy*dt / dx / L_char / L_char);
-%                 end
-%                 if j == M2
-%                     TE_ins = T(i,j) * 2 - T(i,j-1);
-%                     TW_ins = T(i,j-1);
-%                     aW(i,j) = theta * (coef_ins * dy / dx + theta * u_ins *dy*dt/2);
-%                     aS(i,j) = theta * (coef_ins * dx / dy + theta * v_ins *dx*dt/2);
-%                     Sp(i,j) = -(dx * dy / dt - theta * v_ins * dx * dt ...
-%                         + 2 * kapa * T_char * theta *dx*dt / dy / L_char ...
-%                         / L_char - theta * u_ins * dy * dt ...
-%                         + 2 * kapa * T_char * theta *dy*dt / dx / L_char / L_char);
-%                 end
-%             end
-%             Su(i,j) = aP0 * TP_ins + aE0 * TE_ins + aW0 * TW_ins...
-%                 + aN0 * TN_ins + aS0 * TS_ins;
-%         end
-%     end
-%     aS(1,1:M2) = zeros(1,M2);
-%     aN(M1,1:M2)= zeros(1,M2);
-%     aW(1:M1,1) = zeros(M1,1);
-%     aE(1:M1,M2)= zeros(M1,1);
-%     aP = aW + aN + aS + aE - Sp;
-%     T1 = zeros(M1,M2);
-%     T2 = T1;
-%     matrix = sparse_coef_auto(aP,aW,aE,aN,aS,M1,M2);
-%     %     re_Su  = reshape_a(Su,M1,M2);
-%     %     T_downD = matrix \ re_Su;
-%     %     for j = 1 : M2
-%     %         for i = 1 : M1
-%     %             T1(i,j) = T_downD((j-1)*M1+i,1);
-%     %         end
-%     %     end
-%     re_Su  = reshape_a(Su,M1,M2);
-%     T_downD = matrix \ re_Su;
-%     for j = 1 : M2
-%         for i = 1 : M1
-%             T2(i,j) = T_downD((j-1)*M1+i,1);
-%         end
-%     end
-%     %     T2 = T2;
-%     T = T2;
-%     for j = 1:M2
-%         for i = 1:M1
-%             rho(i,j) = (1 - alpha * T(i,j)) * rho0(i,j);
-%         end
-%     end
-    %%
-    r = zeros(M1*M2 + M1*(M2-1)*2 + M2*(M1-1)*2,1);
-    c = zeros(M1*M2 + M1*(M2-1)*2 + M2*(M1-1)*2,1);
-    e = zeros(M1*M2 + M1*(M2-1)*2 + M2*(M1-1)*2,1);
-    for j = 1:M2
-        for i = 1:M1
-            rho_ins = rho0(i,j);
-            kapa = k / rho_ins / heat_cap;
-            u_ins = u(i,j);
-            v_ins = v(i,j);
-            T_P_ins = T(i,j);
-            aP0 = (dx * dy / dt - kapa * T_char / L_char / L_char...
-                * (1 - theta) * 2 * dy * dt / dx -...
-                kapa * T_char / L_char / L_char * (1 - theta) ...
-                * 2 * dx * dt / dy);
-            aE0 = (-(1 - theta) * v_ins * dx * dt / 2 + kapa * T_char...
-                /L_char / L_char * (1-theta) * dy * dt / dy);
-            aW0 = aE0;
-            aN0 = (-(1 - theta) * v_ins * dx * dt / 2 + kapa * T_char...
-                /L_char / L_char * (1-theta) * dy * dt / dy);
-            aS0 = aN0;
-            L2 = L_char * L_char;
-            if i == 1
-                aN_ins = kapa * T_char * theta * dx * dt / L2 / dy - ...
-                    theta * v_ins * dx * dt / 2;
-                aS_ins = 0;
-                T_N_ins = T(i+1,j);
-%                 if t == 0
-                    T_S_ins = TS(y(j));
-%                 elseif t
-%                     T_S_ins = T(i,j) * 2 - T(i+1,j);
-%                 end
-                if j == 1
-                    aW_ins = 0;
-                    aE_ins = kapa * T_char * theta * dy * dt / L2 / dx - ...
-                        theta * u_ins * dy * dt / 2;
-                    T_E_ins = T(i,j+1);
-                    T_W_ins = TW(y(i));
-                    Sp = -(dx * dy / dt + theta * v_ins * dy * dt ...
-                        + 2 * kapa * T_char * theta *dx*dt / ...
-                        dy / L_char / L_char + theta * u_ins * dy * dt ...
-                        + 2 * kapa * T_char * theta *dy*dt / dx / L_char / L_char);
-                elseif j<M2 && j>1
-                    aW_ins = kapa * T_char * theta * dy * dt / L2 / dx + ...
-                        theta * u_ins * dy * dt / 2;
-                    aE_ins = kapa * T_char * theta * dy * dt / L2 / dx - ...
-                        theta * u_ins * dy * dt / 2;
-                    T_E_ins = T(i,j+1);
-                    T_W_ins = T(i,j-1);
-                    Sp = -(dx * dy / dt + theta * v_ins * dy * dt ...
-                        + 2 * kapa * T_char * theta *dx*dt / ...
-                        dy / L_char / L_char + theta * u_ins * dy * dt ...
-                        + 2 * kapa * T_char * theta *dy*dt / dx / L_char / L_char);
-                elseif j == M2
-                    aE_ins = 0;
-                    aW_ins = kapa * T_char * theta * dy * dt / L2 / dx + ...
-                        theta * u_ins * dy * dt / 2;
-                    T_E_ins = TE(y(i));
-                    T_W_ins = T(i,j-1);
-                    Sp = -(dx * dy / dt + theta * v_ins * dy * dt ...
-                        + 2 * kapa * T_char * theta *dy*dt / ...
-                        dx / L_char / L_char - theta * u_ins * dy * dt ...
-                        + 2 * kapa * T_char * theta *dy*dt / dx / L_char / L_char);
+    for i = 1:M1
+        for j = 1:M2
+            %                 theta(i,1) = TW(y(i));
+            %                 theta(i,M2) = TE(y(i));
+            %                 theta(1,j) = TS(y(i));
+            %                 theta(M1,j) = TN(y(i));
+            if j == 1
+                v(i,j) = vW(y(i));
+                if i == 1
+                    v(i,j) = 0;
+                elseif i == M1
+                    v(i,j) = 0;
                 end
-            elseif i>1 && i<M1
-                aN_ins = kapa * T_char * theta * dx * dt / L2 / dy - ...
-                    theta * v_ins * dx * dt / 2;
-                aS_ins = kapa * T_char * theta * dx * dt / L2 / dy + ...
-                    theta * v_ins * dx * dt / 2;
-                T_N_ins = T(i+1,j);
-                T_S_ins = T(i-1,j);
-                if j == 1
-                    aW_ins = 0;
-                    aE_ins = kapa * T_char * theta * dy * dt / L2 / dx - ...
-                        theta * u_ins * dy * dt / 2;
-                    T_E_ins = T(i,j+1);
-                    T_W_ins = TW(y(i));
-                    Sp = -(dx * dy / dt + theta * u_ins * dy * dt ...
-                        + 2 * kapa * T_char * theta *dy*dt / dx / L_char / L_char);
-                elseif j<M2 && j>1
-                    aW_ins = kapa * T_char * theta * dy * dt / L2 / dx + ...
-                        theta * u_ins * dy * dt / 2;
-                    aE_ins = kapa * T_char * theta * dy * dt / L2 / dx - ...
-                        theta * u_ins * dy * dt / 2;
-                    T_E_ins = T(i,j+1);
-                    T_W_ins = T(i,j-1);
-                    Sp = -(dx * dy / dt);
-                elseif j == M2
-                    aW_ins = kapa * T_char * theta * dy * dt / L2 / dx + ...
-                        theta * u_ins * dy * dt / 2;
-                    aE_ins = 0;
-                    T_E_ins = TE(y(i));
-                    T_W_ins = T(i,j-1);
-                    Sp = -(dx * dy / dt - theta * u_ins * dy * dt ...
-                        + 2 * kapa * T_char * theta *dy*dt / dx ...
-                        / L_char / L_char);
-                end
-            elseif i == M1
-                aN_ins = 0;
-                aS_ins = kapa * T_char * theta * dx * dt / L2 / dy + ...
-                    theta * v_ins * dx * dt / 2;
-                Sp = -(dx * dy / dt - theta * v_ins * dx * dt ...
-                    + 2 * kapa * T_char * theta *dx*dt / dy ...
-                    / L_char / L_char);
-                T_N_ins = TN(x(j));
-                T_S_ins = T(i-1,j);
-                if j == 1
-                    aW_ins = 0;
-                    aE_ins = kapa * T_char * theta * dy * dt / L2 / dx - ...
-                        theta * u_ins * dy * dt / 2;
-                    T_E_ins = T(i,j+1);
-                    T_W_ins = TW(y(i));
-                    Sp = -(dx * dy / dt - theta * v_ins * dx * dt ...
-                        + 2 * kapa * T_char * theta *dx*dt / dy / L_char ...
-                        / L_char + theta * u_ins * dy * dt ...
-                        + 2 * kapa * T_char * theta *dy*dt ...
-                        / dx / L_char / L_char);
-                elseif j<M2 && j>1
-                    aW_ins = kapa * T_char * theta * dy * dt / L2 / dx + ...
-                        theta * u_ins * dy * dt / 2;
-                    aE_ins = kapa * T_char * theta * dy * dt / L2 / dx - ...
-                        theta * u_ins * dy * dt / 2;
-                    T_E_ins = T(i,j+1);
-                    T_W_ins = T(i,j-1);
-                    Sp = -(dx * dy / dt + theta * v_ins * dx * dt ...
-                        + 2 * kapa * T_char * theta *dx*dt / dy ...
-                        / L_char / L_char);
-                elseif j == M2
-                    aW_ins = kapa * T_char * theta * dy * dt / L2 / dx + ...
-                        theta * u_ins * dy * dt / 2;
-                    aE_ins = 0;
-                    T_E_ins = TE(y(i));
-                    T_W_ins = T(i,j-1);
-                    Sp = -(dx * dy / dt - theta * v_ins * dx * dt ...
-                        + 2 * kapa * T_char * theta *dx*dt / dy / L_char ...
-                        / L_char - theta * u_ins * dy * dt ...
-                        + 2 * kapa * T_char * theta *dy*dt / dx ...
-                        / L_char / L_char);
+            elseif j == M2
+                v(i,j) = vE(y(i));
+                if i == 1
+                    v(i,j) = 0;
+                elseif i == M1
+                    v(i,j) = 0;
                 end
             end
-            Su(i,j) = aP0 * T_P_ins + aE0 * T_E_ins + aW0 * T_W_ins...
-                + aN0 * T_N_ins + aS0 * T_S_ins;
-            aP_ins = aN_ins + aS_ins + aW_ins + aE_ins - Sp;
+            if i == 1
+                u(i,j) = uS(x(j));
+                if j == 1
+                    u(i,j) = 0;
+                elseif j == M2
+                    u(i,j) = 0;
+                end
+            elseif i == M1
+                u(i,j) = uN(x(j));
+                if j == 1
+                    u(i,j) = 0;
+                elseif j == M2
+                    u(i,j) = 0;
+                end
+            end
+        end
+    end
+
+    %%give the value to the contemporary field:u0, v0, theta0
+    u0 = u;
+    v0 = v;
+    theta0 = theta;
+    rho0 = rho;
+
+
+    for j = 1:M2
+        for i = 1:M1
+            rho(i,j) = (1 - alpha * theta0(i,j)) * rho0(i,j);
+        end
+    end
+    for j = 1:M2
+        for i = 1:M1
+            Eu(i,j) = rho(i,j) * V_char * V_char / 2 / P_char;
+            Re(i,j) = L_char * V_char * mu / rho(i,j);
+        end
+    end
+    Fr = V_char * V_char / 2 / g / L_char;
+
+
+
+    %%calculate the new value of v, u
+    [u,v,ue,uw,vn,vs] = SIMPLE_better(Lx,Ly,M1,M2,uN,uS,vW,vE,Fr,Eu,Re,rho,Temperature_char,alpha,theta0,rho_background);
+
+
+    %%calculate the value of coefficient
+    for i = 1:M1
+        for j = 1:M2
+            Pe(i,j) = L_char * V_char * rho(i,j) * heat_cap / k(i,j);
+            St(i,j) = L_char / V_char / T_char;
+        end
+    end
+
+
+    if t > 0
+        aE0 = aE;
+        aW0 = aW;
+        aN0 = aN;
+        aS0 = aS;
+        aP0 = aP;
+    end
+
+    %%calculate the temperature coefficients of metrix
+    for i = 1:M1
+        for j = 1:M2
+
+            %% new value
+
+            ue_ins = ue(i,j);
+            uw_ins = uw(i,j);
+            vn_ins = vn(i,j);
+            vs_ins = vs(i,j);
+
+            theta0_P_ins = theta0(i,j);
+
+            Pe_ins = Pe(i,j);
+            St_ins = St(i,j);
+
+
+            Dx_ins = dy / Pe_ins / dx;
+            Dy_ins = dx / Pe_ins / dy;
+
+            Fe_ins = ue_ins * dy;
+            Fw_ins = uw_ins * dy;
+            Fn_ins = vn_ins * dx;
+            Fs_ins = vs_ins * dx;
+
+            %% calculate temperature
+
+            if i == 1
+                aS_ins = 0;
+                aN_ins = Dy_ins - Fn_ins / 2;
+
+                theta0_N_ins = theta0(i+1,j);
+                theta0_S_ins = TS(x(j));
+                if j == 1
+                    aW_ins = 0;
+                    aE_ins = Dx_ins - Fe_ins / 2;
+
+                    theta0_E_ins = theta0(i,j+1);
+                    theta0_W_ins = TW(y(i));
+
+                    Sp_ins = -2 * (Dy_ins + Dx_ins);
+
+                    variable = (2 * Dx_ins) * theta0_W_ins...
+                        + (2 * Dy_ins) * theta0_S_ins;
+                elseif j>1 && j<M2
+                    aW_ins = Dx_ins + Fw_ins / 2;
+                    aE_ins = Dx_ins - Fe_ins / 2;
+
+                    theta0_E_ins = theta0(i,j+1);
+                    theta0_W_ins = theta0(i,j-1);
+
+                    Sp_ins = -2 * (Dy_ins);
+
+                    variable = (2 * Dy_ins) * theta0_S_ins;
+                elseif j == M2
+                    aW_ins = Dx_ins + Fw_ins / 2;
+                    aE_ins = 0;
+
+                    theta0_E_ins = TE(y(i));
+                    theta0_W_ins = theta0(i,j-1);
+
+                    Sp_ins = -2 * (Dy_ins + Dx_ins);
+
+                    variable = (2 * Dx_ins) * theta0_E_ins...
+                        + (2 * Dy_ins) * theta0_S_ins;
+                end
+            elseif i>1 && i<M1
+                aS_ins = Dy_ins + Fs_ins / 2;
+                aN_ins = Dy_ins - Fn_ins / 2;
+
+                theta0_N_ins = theta0(i+1,j);
+                theta0_S_ins = theta0(i-1,j);
+                if j == 1
+                    aW_ins = 0;
+                    aE_ins = Dx_ins - Fe_ins / 2;
+
+                    theta0_E_ins = theta0(i,j+1);
+                    theta0_W_ins = TW(y(i));
+
+                    Sp_ins = -2 * (Dx_ins);
+
+                    variable = (2 * Dx_ins) * theta0_W_ins;
+                elseif j>1 && j<M2
+                    aW_ins = Dx_ins + Fw_ins / 2;
+                    aE_ins = Dx_ins - Fe_ins / 2;
+
+                    theta0_E_ins = theta0(i,j+1);
+                    theta0_W_ins = theta0(i,j-1);
+
+                    Sp_ins = 0;
+
+                    variable = 0;
+                elseif j == M2
+                    aW_ins = Dx_ins + Fw_ins / 2;
+                    aE_ins = 0;
+
+                    theta0_E_ins = TE(y(i));
+                    theta0_W_ins = theta0(i,j-1);
+
+                    Sp_ins = -2 * (Dx_ins);
+
+                    variable = (2 * Dx_ins) * theta0_E_ins;
+                end
+            elseif i == M1
+                aS_ins = Dy_ins + Fs_ins / 2;
+                aN_ins = 0;
+
+                theta0_N_ins = TN(x(j));
+                theta0_S_ins = theta0(i-1,j);
+                if j == 1
+                    aW_ins = 0;
+                    aE_ins = Dx_ins - Fe_ins / 2;
+
+                    theta0_E_ins = theta0(i,j+1);
+                    theta0_W_ins = TW(y(i));
+
+                    Sp_ins = -2 * (Dy_ins + Dx_ins);
+
+                    variable = (2 * Dx_ins) * theta0_W_ins...
+                        + (2 * Dy_ins - Fn_ins) * theta0_N_ins;
+                elseif j>1 && j<M2
+                    aW_ins = Dx_ins + Fw_ins / 2;
+                    aE_ins = Dx_ins - Fe_ins / 2;
+
+                    theta0_E_ins = theta0(i,j+1);
+                    theta0_W_ins = theta0(i,j-1);
+
+                    Sp_ins = -2 * (Dy_ins);
+
+                    variable = (2 * Dx_ins) * theta0_N_ins;
+                elseif j == M2
+                    aW_ins = Dx_ins + Fw_ins / 2;
+                    aE_ins = 0;
+
+                    theta0_E_ins = TE(y(i));
+                    theta0_W_ins = theta0(i,j-1);
+
+                    Sp_ins = -2 * (Dy_ins + Dx_ins);
+
+                    variable = (2 * Dx_ins) * theta0_E_ins...
+                        + (2 * Dy_ins) * theta0_N_ins;
+                end
+            end
+
+            aP_ins = aW_ins + aE_ins + aN_ins + aS_ins - Sp_ins...
+                + Fe_ins - Fw_ins + Fn_ins - Fs_ins + St_ins * dt * dx * dy;
+            aP(i,j) = aP_ins;
+            aN(i,j) = aN_ins;
+            aS(i,j) = aS_ins;
+            aW(i,j) = aW_ins;
+            aE(i,j) = aE_ins;
+
+            if t == 0
+                aE0_ins = 0;
+                aW0_ins = 0;
+                aN0_ins = 0;
+                aS0_ins = 0;
+                aP0_ins = 0;
+                timegoing = 1/2;
+            elseif t
+                aE0_ins = aE0(i,j);
+                aW0_ins = aW0(i,j);
+                aN0_ins = aN0(i,j);
+                aS0_ins = aS0(i,j);
+                aP0_ins = aP0(i,j);
+                timegoing = 1;
+            end
+
+
+            Su_ins = (1 - WP) / WP * (aE0_ins * theta0_E_ins +...
+                aW0_ins * theta0_W_ins + aN0_ins * theta0_N_ins +...
+                aS0_ins * theta0_S_ins - aP0_ins * theta0_P_ins) +...
+                variable / WP * timegoing;
+
+            %             if j == 1 || j == M2 || i == M1
+            %                 Su_ins = 0;
+            %             end
+            varys(i,j) = variable;
+            theta0_W(i,j) = theta0_W_ins;
+            theta0_E(i,j) = theta0_E_ins;
+            theta0_N(i,j) = theta0_N_ins;
+            theta0_S(i,j) = theta0_S_ins;
+            theta0_P(i,j) = theta0_P_ins;
+
+
+
+
+
+            Su(i,j) = Su_ins;
+
+
             I = (j - 1) * M1 + i;
+
+            %record the coefficient of sparse
             ppp = ppp + 1;
             e(ppp) = aP_ins;
             r(ppp) = I ;
             c(ppp) = I ;
             if I<M1*M2
                 ppp = ppp + 1;
-                e(ppp) = -aS_ins;
+                e(ppp) = -aN_ins;
                 r(ppp) = I ;
                 c(ppp) = I+1 ;
             end
@@ -359,50 +363,111 @@ for t = 0:Mt
             end
             if I>1
                 ppp = ppp + 1;
-                e(ppp) = -aN_ins;
+                e(ppp) = -aS_ins;
                 r(ppp) = I ;
                 c(ppp) = I-1 ;
             end
+
+            re_Su((j-1) * M1 + i,1) = Su_ins;
+
         end
     end
+
     matrix = sparse(r,c,e);
-    re_Su = reshape_a(Su,M1,M2);
-    T_downD = matrix \ re_Su;
-    for j = 1 : M2
-        for i = 1 : M1
-            T(i,j) = T_downD((j-1)*M1+i,1);
+
+    phi = matrix \ re_Su;
+
+    for i = 1:M1
+        for j = 1:M2
+            theta(i,j) = phi((j-1)*M1+i,1);
         end
     end
-    for j = 1:M2
-        for i = 1:M1
-            rho(i,j) = (1 - alpha * T(i,j)) * rho0(i,j);
-        end
+
+    kkk = t;
+    if mod(kkk,5) == 0
+        %         figure(1);
+        %         subplot(5,2,1);
+        %         mesh(y,x,theta0_E);
+        %         xlabel('x(m)');
+        %         ylabel('y(m)');
+        %         zlabel('theta0 E');
+        %         box on;
+        %         figure(1);
+        %         subplot(5,2,2);
+        %         mesh(y,x,theta0_W);
+        %         xlabel('x(m)');
+        %         ylabel('y(m)');
+        %         zlabel('theta0 W');
+        %         box on;
+        %         figure(1);
+        %         subplot(5,2,3);
+        %         mesh(y,x,theta0_N);
+        %         xlabel('x(m)');
+        %         ylabel('y(m)');
+        %         zlabel('theta0 N');
+        %         box on;
+        %         figure(1);
+        %         subplot(5,2,4);
+        %         mesh(y,x,theta0_S);
+        %         xlabel('x(m)');
+        %         ylabel('y(m)');
+        %         zlabel('theta0 S');
+        %         box on;
+        %         figure(1);
+        %         subplot(5,2,5);
+        %         mesh(y,x,theta0_P);
+        %         xlabel('x(m)');
+        %         ylabel('y(m)');
+        %         zlabel('theta0 P');
+        %         box on;
+        %         figure(1);
+        %         subplot(5,2,6);
+        %         mesh(y,x,varys);
+        %         xlabel('x(m)');
+        %         ylabel('y(m)');
+        %         zlabel('varys');
+        %         box on;
+        %         figure(1);
+        %         subplot(5,2,7);
+        %         mesh(y,x,aP);
+        %         xlabel('x(m)');
+        %         ylabel('y(m)');
+        %         zlabel('aP');
+        %         box on;
+        %         figure(1);
+        %         subplot(5,2,8);
+        %         mesh(y,x,theta);
+        %         xlabel('x(m)');
+        %         ylabel('y(m)');
+        %         zlabel('theta');
+        %         box on;
+        %         figure(1);
+        %         subplot(5,2,9);
+        %         mesh(y,x,Su);
+        %         xlabel('x(m)');
+        %         ylabel('y(m)');
+        %         zlabel('Su');
+        %         box on;
+        clf;
+        %         figure(1);
+        %         subplot(5,2,10);
+        pcolor(x,y,theta);
+        shading interp;
+        drawnow;
+        hold on;
+        contour(x,y,theta);
+        %         title(['2-D unsteady convection-diffusion equation step t = ', num2str(t, '%d')]);
+        title(['step t = ', num2str(t, '%d')]);
+        colorbar;
+        hold on;
+        quiver(x(1:3:end),y(1:3:end),u(1:3:end,1:3:end),v(1:3:end,1:3:end));
+        hold on;
+        %     startx = linspace(0,3,15);
+        %     starty = startx;
+        %     streamline(x,y,u,v,startx,starty);
+        %     hold on
+        str1 = ['NSH的第',num2str(t),'个图'];
+        print(gcf,[str1,'.png'],'-dpng');
     end
-    %calculate Fr,Eu,Re
-    %V,L,P is characteristic
-    Fr = V_char * V_char / (2 * g * L_char);
-    for j = 1:M2
-        for i = 1:M1
-            Eu(i,j) = rho(i,j) * V_char * V_char / 2 / P_char;
-            Re(i,j) = L_char * V_char * mu / rho(i,j);
-        end
-    end
-    [u0,v0] = SIMPLE_better(Lx,Ly,M1,M2,uN,uS,vW,vE,Fr,Eu,Re,rho);
-    kkk = Mt;
-    if mod(kkk,10) == 0
-    figure(1);
-    clf;
-    pcolor(x,y,T);
-    hold on;
-    contour(x,y,T);
-    title(['2-D unsteady convection-diffusion equation @ t = ', num2str(Mt, '%.2e')])
-    colorbar;
-    drawnow;
-    figure(2);
-    quiver(x(1:3:end),y(1:3:end),u0(1:3:end,1:3:end),v0(1:3:end,1:3:end));
-    startx = linspace(0,1,15);
-    starty = zeros(15,1);
-    streamline(x,y,u0,v0,startx,starty);
-    drawnow;
-    end
+end
 end
