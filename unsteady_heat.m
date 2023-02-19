@@ -22,9 +22,9 @@ k = zeros(M1,M2);
 for i = 1:M1
     for j = 1:M2
         theta(i,j) = T0;
-%         if i > 23 && i < 27 && j > 23 && j < 27
-%             theta(i,j) = 1;
-%         end
+        %         if i > 23 && i < 27 && j > 23 && j < 27
+        %             theta(i,j) = 1;
+        %         end
     end
 end
 for i = 1:M1
@@ -189,15 +189,15 @@ for t = 0:Mt
                 theta0_N_ins = theta0(i+1,j);
                 theta0_S_ins = TS(x(j));
                 if j == 1
-                    aW_ins = Fw_ins / 2;
+                    aW_ins = 0 + Fw_ins / 2;
                     aE_ins = Dx_ins - Fe_ins / 2;
 
                     theta0_E_ins = theta0(i,j+1);
                     theta0_W_ins = theta0(i,j) * 2 - theta0(i,j+1);
 
-                    Sp_ins = -2 * (Dy_ins + Dx_ins);
+                    Sp_ins = -2 * (Dy_ins + 0);
 
-                    variable = (2 * Dx_ins) * theta0_W_ins...
+                    variable = (2 * 0) * theta0_W_ins...
                         + (2 * Dy_ins) * theta0_S_ins;
                 elseif j>1 && j<M2
                     aW_ins = Dx_ins + Fw_ins / 2;
@@ -211,14 +211,14 @@ for t = 0:Mt
                     variable = (2 * Dy_ins) * theta0_S_ins;
                 elseif j == M2
                     aW_ins = Dx_ins + Fw_ins / 2;
-                    aE_ins = - Fe_ins / 2;
+                    aE_ins = 0 - Fe_ins / 2;
 
                     theta0_E_ins = theta0(i,j) * 2 - theta0(i,j-1);
                     theta0_W_ins = theta0(i,j-1);
 
-                    Sp_ins = -2 * (Dy_ins + Dx_ins);
+                    Sp_ins = -2 * (Dy_ins + 0);
 
-                    variable = (2 * Dx_ins) * theta0_E_ins...
+                    variable = (2 * 0) * theta0_E_ins...
                         + (2 * Dy_ins) * theta0_S_ins;
                 end
             elseif i>1 && i<M1
@@ -228,7 +228,7 @@ for t = 0:Mt
                 theta0_N_ins = theta0(i+1,j);
                 theta0_S_ins = theta0(i-1,j);
                 if j == 1
-                    aW_ins = Fw_ins / 2;
+                    aW_ins = 0 + Fw_ins / 2;
                     aE_ins = Dx_ins - Fe_ins / 2;
 
                     theta0_E_ins = theta0(i,j+1);
@@ -262,10 +262,10 @@ for t = 0:Mt
                 aS_ins = Dy_ins + Fs_ins / 2;
                 aN_ins = 0;
 
-                theta0_N_ins = theta0(i,j) * 2 - theta0(i-1,j);
+                theta0_N_ins = TN(x(j));
                 theta0_S_ins = theta0(i-1,j);
                 if j == 1
-                    aW_ins = Fw_ins / 2;
+                    aW_ins = 0 + Fw_ins / 2;
                     aE_ins = Dx_ins - Fe_ins / 2;
 
                     theta0_E_ins = theta0(i,j+1);
@@ -274,7 +274,7 @@ for t = 0:Mt
                     Sp_ins = -2 * (Dy_ins);
 
                     variable = (2 * 0) * theta0_W_ins...
-                        + (2 * Dy_ins - Fn_ins) * theta0_N_ins;
+                        + (2 * Dy_ins) * theta0_N_ins;
                 elseif j>1 && j<M2
                     aW_ins = Dx_ins + Fw_ins / 2;
                     aE_ins = Dx_ins - Fe_ins / 2;
@@ -287,7 +287,7 @@ for t = 0:Mt
                     variable = (2 * Dy_ins) * theta0_N_ins;
                 elseif j == M2
                     aW_ins = Dx_ins + Fw_ins / 2;
-                    aE_ins = - Fe_ins / 2;
+                    aE_ins = 0 - Fe_ins / 2;
 
                     theta0_E_ins = theta0(i,j) * 2 - theta0(i,j-1);
                     theta0_W_ins = theta0(i,j-1);
@@ -333,53 +333,53 @@ for t = 0:Mt
                     aS0_ins = 0;
                     aN0_ins = Dy_ins - Fn_ins / 2;
                     if j == 1
-                        aW0_ins = 0;
-                        aE0_ins = 0 - Fe_ins / 2;
+                        aW0_ins = 0 + Fw_ins / 2;
+                        aE0_ins = Dx_ins - Fe_ins / 2;
                         Sp0_ins = -2 * (Dy_ins + 0);
                     elseif j>1 && j<M2
                         aW0_ins = Dx_ins + Fw_ins / 2;
                         aE0_ins = Dx_ins - Fe_ins / 2;
                         Sp0_ins = -2 * (Dy_ins);
                     elseif j == M2
-                        aW0_ins = 0 + Fw_ins / 2;
-                        aE0_ins = 0;
+                        aW0_ins = Dx_ins + Fw_ins / 2;
+                        aE0_ins = 0 - Fe_ins / 2;
                         Sp0_ins = -2 * (Dy_ins + 0);
                     end
                 elseif i>1 && i<M1
                     aS0_ins = Dy_ins + Fs_ins / 2;
                     aN0_ins = Dy_ins - Fn_ins / 2;
                     if j == 1
-                        aW0_ins = 0;
-                        aE0_ins = 0 - Fe_ins / 2;
+                        aW0_ins = 0 + Fw_ins / 2;
+                        aE0_ins = Dx_ins - Fe_ins / 2;
                         Sp0_ins = -2 * (0);
                     elseif j>1 && j<M2
                         aW0_ins = Dx_ins + Fw_ins / 2;
                         aE0_ins = Dx_ins - Fe_ins / 2;
                         Sp0_ins = 0;
                     elseif j == M2
-                        aW0_ins = 0 + Fw_ins / 2;
-                        aE0_ins = 0;
+                        aW0_ins = Dx_ins + Fw_ins / 2;
+                        aE0_ins = 0 - Fe_ins / 2;
                         Sp0_ins = -2 * (0);
                     end
                 elseif i == M1
-                    aS_ins = Dy_ins + Fs_ins / 2;
-                    aN_ins = 0;
+                    aS0_ins = Dy_ins + Fs_ins / 2;
+                    aN0_ins = 0;
                     if j == 1
-                        aW0_ins = 0;
-                        aE0_ins = 0 - Fe_ins / 2;
+                        aW0_ins = 0 + Fw_ins / 2;
+                        aE0_ins = Dx_ins - Fe_ins / 2;
                         Sp0_ins = -2 * (Dy_ins + 0);
                     elseif j>1 && j<M2
                         aW0_ins = Dx_ins + Fw_ins / 2;
                         aE0_ins = Dx_ins - Fe_ins / 2;
                         Sp0_ins = -2 * (Dy_ins);
                     elseif j == M2
-                        aW0_ins = 0 + Fw_ins / 2;
-                        aE0_ins = 0;
+                        aW0_ins = Dx_ins + Fw_ins / 2;
+                        aE0_ins = 0 - Fe_ins / 2;
                         Sp0_ins = -2 * (Dy_ins + 0);
                     end
                 end
-            aP0_ins = aW0_ins + aE0_ins + aN0_ins + aS0_ins - Sp0_ins...
-                + Fe_ins - Fw_ins + Fn_ins - Fs_ins + St_ins * dt * dx * dy;
+                aP0_ins = aW0_ins + aE0_ins + aN0_ins + aS0_ins - Sp0_ins...
+                    + Fe_ins - Fw_ins + Fn_ins - Fs_ins + St_ins * dt * dx * dy;
                 timegoing = WP;
             elseif t
                 aE0_ins = aE0(i,j);
@@ -462,91 +462,96 @@ for t = 0:Mt
 
     kkk = t;
     if mod(kkk,1) == 0
-%                         figure(1);
-%                         subplot(3,3,1);
-%                         mesh(y,x,theta0_E);
-%                         xlabel('x(m)');
-%                         ylabel('y(m)');
-%                         zlabel('theta0 E');
-%                         box on;
-%                         figure(1);
-%                         subplot(3,3,2);
-%                         mesh(y,x,theta0_W);
-%                         xlabel('x(m)');
-%                         ylabel('y(m)');
-%                         zlabel('theta0 W');
-%                         box on;
-%                         figure(1);
-%                         subplot(3,3,3);
-%                         mesh(y,x,theta0_N);
-%                         xlabel('x(m)');
-%                         ylabel('y(m)');
-%                         zlabel('theta0 N');
-%                         box on;
-%                         figure(1);
-%                         subplot(3,3,4);
-%                         mesh(y,x,theta0_S);
-%                         xlabel('x(m)');
-%                         ylabel('y(m)');
-%                         zlabel('theta0 S');
-%                         box on;
-%                         figure(1);
-%                         subplot(3,3,5);
-%                         mesh(y,x,theta0_P);
-%                         xlabel('x(m)');
-%                         ylabel('y(m)');
-%                         zlabel('theta0 P');
-%                         box on;
-%                         figure(1);
-%                         subplot(3,3,6);
-%                         mesh(y,x,varys);
-%                         xlabel('x(m)');
-%                         ylabel('y(m)');
-%                         zlabel('varys');
-%                         box on;
-%                         figure(1);
-%                         subplot(3,3,7);
-%                         mesh(y,x,aP);
-%                         xlabel('x(m)');
-%                         ylabel('y(m)');
-%                         zlabel('aP');
-%                         box on;
-%                         figure(1);
-%                         subplot(3,3,8);
-%                         mesh(y,x,theta);
-%                         xlabel('x(m)');
-%                         ylabel('y(m)');
-%                         zlabel('theta');
-%                         box on;
-%                         figure(1);
-%                         subplot(3,3,9);
-%                         mesh(y,x,Su);
-%                         xlabel('x(m)');
-%                         ylabel('y(m)');
-%                         zlabel('Su');
-%                         box on;
         clf;
+        figure(1);
+        subplot(3,3,1);
+        mesh(y,x,aE);
+        xlabel('x(m)');
+        ylabel('y(m)');
+        zlabel('aE');
+        box on;
+        figure(1);
+        subplot(3,3,2);
+        mesh(y,x,aW);
+        xlabel('x(m)');
+        ylabel('y(m)');
+        zlabel('aW');
+        box on;
+        figure(1);
+        subplot(3,3,3);
+        mesh(y,x,aN);
+        xlabel('x(m)');
+        ylabel('y(m)');
+        zlabel('aN');
+        box on;
+        figure(1);
+        subplot(3,3,4);
+        mesh(y,x,aS);
+        xlabel('x(m)');
+        ylabel('y(m)');
+        zlabel('aS');
+        box on;
+        figure(1);
+        subplot(3,3,5);
+        mesh(y,x,aP);
+        xlabel('x(m)');
+        ylabel('y(m)');
+        zlabel('aP');
+        box on;
+        figure(1);
+        subplot(3,3,6);
+        mesh(y,x,varys);
+        xlabel('x(m)');
+        ylabel('y(m)');
+        zlabel('varys');
+        box on;
+        figure(1);
+        subplot(3,3,7);
+        mesh(y,x,aP);
+        xlabel('x(m)');
+        ylabel('y(m)');
+        zlabel('aP');
+        box on;
+        figure(1);
+        subplot(3,3,8);
+        mesh(y,x,theta);
+        xlabel('x(m)');
+        ylabel('y(m)');
+        zlabel('theta');
+        box on;
+        figure(1);
+        subplot(3,3,9);
+        mesh(y,x,Su);
+        xlabel('x(m)');
+        ylabel('y(m)');
+        zlabel('Su');
+        box on;
+        %                 clf;
+        %                 figure(1);
+        %                 subplot(5,2,10);
+        %         pcolor(x,y,theta);
+
+
+        %         % hold on;
         %         figure(1);
-        %         subplot(5,2,10);
-        % pcolor(x,y,theta);
-        
-        
-        % hold on;
-        contour(x,y,theta, 'LineColor','k','LevelStep',0.05,'Fill','on');
-        %         title(['2-D unsteady convection-diffusion equation step t = ', num2str(t, '%d')]);
-        shading interp;
-        title(['step t = ', num2str(t, '%d')]);
-        colorbar;
-        hold on;
-        quiver(x(1:3:end),y(1:3:end),u(1:3:end,1:3:end),v(1:3:end,1:3:end));
-        hold on;
-        drawnow;
-        %     startx = linspace(0,3,15);
-        %     starty = startx;
-        %     streamline(x,y,u,v,startx,starty);
-        %     hold on
-        str1 = ['NSH的第',num2str(t),'个图'];
-        print(gcf,[str1,'.png'],'-dpng');
+        %         contour(x,y,theta, 'LineColor','k','LevelStep',0.05,'Fill','on');
+        %         %         title(['2-D unsteady convection-diffusion equation step t = ', num2str(t, '%d')]);
+        %         shading interp;
+        %         title(['step t = ', num2str(t, '%d')]);
+        %         colorbar;
+        %         hold on;
+        %         quiver(x(1:3:end),y(1:3:end),u(1:3:end,1:3:end),v(1:3:end,1:3:end));
+        %         hold on;
+        %         drawnow;
+        %         %     startx = linspace(0,3,15);
+        %         %     starty = startx;
+        %         %     streamline(x,y,u,v,startx,starty);
+        %         %     hold on
+        %         str1 = ['NSH的第',num2str(t),'个图'];
+        %         print(gcf,[str1,'.png'],'-dpng');
+        % %         figure(2);
+        % %         mesh(x,y,theta0_S);
+        % %         drawnow;
     end
 end
 end
